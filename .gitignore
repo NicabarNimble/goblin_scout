@@ -1,0 +1,7 @@
+# Privacy
+.env
+
+# Folders
+/target
+/repositories
+/markdown
