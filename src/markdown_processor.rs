@@ -2,11 +2,17 @@
 
 use crate::utilities::{is_ignored, write_to_file};
 use chrono::Utc;
-use git2::Repository;
+use git2::{Commit, Object, ObjectType, Remote, Repository, Revwalk};
+use std::collections::HashMap;
 use std::fs;
-use std::io::Error as IOError;
+use std::io::{Error as IOError, ErrorKind as IOErrorKind};
 use std::path::Path;
 use walkdir::WalkDir;
+
+// Adjust the return type to handle both git2::Error and IOError.
+fn git_to_io_error(err: git2::Error) -> IOError {
+    IOError::new(IOErrorKind::Other, err.to_string())
+}
 
 pub fn gather_repo_content(repo: &Repository) -> Result<String, IOError> {
     let mut markdown_content = String::new();
@@ -47,8 +53,15 @@ pub fn generate_markdown_files(repo: &Repository, base_output_dir: &Path) -> Res
 
     let repo_path = repo.path().parent().unwrap_or_else(|| Path::new(""));
 
-    // Fetch current date and time
+    let remote = repo.find_remote("origin").unwrap();
+    let repo_url = remote.url().unwrap_or("").replace(".git", "");
+
+    let head = repo.head().unwrap();
+    let default_branch = head.shorthand().unwrap_or("main");
+
     let current_datetime = Utc::now().format("%Y-%m-%d %H:%M:%S").to_string();
+
+    let contributors = gather_contributors(repo)?;
 
     for entry in WalkDir::new(&repo_path) {
         let entry = match entry {
@@ -65,42 +78,49 @@ pub fn generate_markdown_files(repo: &Repository, base_output_dir: &Path) -> Res
 
         let content = fs::read_to_string(entry.path()).unwrap_or_default();
 
+        let relative_path = entry
+            .path()
+            .strip_prefix(&repo_path)
+            .unwrap_or(entry.path());
+        let file_github_url = format!(
+            "{}/blob/{}/{}",
+            repo_url,
+            default_branch,
+            relative_path.display()
+        );
+
+        let file_name = entry
+            .path()
+            .file_name()
+            .unwrap_or_default()
+            .to_string_lossy();
+        let contributor_list = format_contributors(&contributors);
+
         let header = format!(
             "---\n\
             title: {} - {}\n\
             date: {}\n\
             tags:\n\
             - <1st tag>\n\
-            github: <link to github>\n\
-            contributors: <list of repo contributors from most to least>\n\
+            github: [{}]({})\n\
+            contributors: {}\n\
             release: <latest release and time/date>\n\
             ---\n\n\
             File\n\
             Path: {}\n\
             Size: {} bytes\n",
             repo_name,
-            entry
-                .path()
-                .file_name()
-                .unwrap_or_default()
-                .to_string_lossy(),
+            file_name,
             current_datetime,
-            entry
-                .path()
-                .strip_prefix(&repo_path)
-                .unwrap_or(entry.path())
-                .display(),
+            file_name,
+            file_github_url,
+            contributor_list,
+            relative_path.display(),
             content.len()
         );
 
         let file_markdown = format!("{}\n```\n{}\n```\n", header, content);
 
-        let relative_path = entry
-            .path()
-            .strip_prefix(&repo_path)
-            .unwrap_or(entry.path());
-
-        // Adjusted here to keep the original extension and add `.md` after
         let output_file_name = format!("{}.md", relative_path.to_string_lossy());
         let output_file_path = output_dir.join(output_file_name);
 
@@ -108,4 +128,38 @@ pub fn generate_markdown_files(repo: &Repository, base_output_dir: &Path) -> Res
     }
 
     Ok(())
+}
+
+fn gather_contributors(repo: &Repository) -> Result<HashMap<String, usize>, IOError> {
+    let mut revwalk: Revwalk = repo.revwalk().map_err(git_to_io_error)?;
+    revwalk.push_head().map_err(git_to_io_error)?;
+    let mut contributors: HashMap<String, usize> = HashMap::new();
+
+    for commit_id in revwalk {
+        match commit_id {
+            Ok(id) => {
+                let obj: Object = repo
+                    .find_object(id, Some(ObjectType::Commit))
+                    .map_err(git_to_io_error)?;
+                let commit = obj.into_commit().expect("It's a commit object");
+                let author = commit.author().name().unwrap_or("Unknown").to_string();
+                *contributors.entry(author).or_insert(0) += 1;
+            }
+            Err(_) => continue,
+        }
+    }
+    Ok(contributors)
+}
+
+fn format_contributors(contributors: &HashMap<String, usize>) -> String {
+    let mut contributors_vec: Vec<(&String, &usize)> = contributors.iter().collect();
+    contributors_vec.sort_by(|a, b| b.1.cmp(a.1));
+
+    contributors_vec
+        .into_iter()
+        .filter(|&(_, count)| *count > 1) // filter out those with 1 or fewer commits
+        .take(5) // take top 5 contributors
+        .map(|(author, count)| format!("{} ({})", author, count))
+        .collect::<Vec<String>>()
+        .join(" | ") // separate by '|'
 }
