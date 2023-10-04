@@ -5,7 +5,7 @@ use std::io;
 #[derive(Debug)]
 pub enum CustomError {
     IOError(io::Error),
-    // ... Add other error types as needed.
+    StrError(String), // New variant for handling &str errors
 }
 
 impl From<io::Error> for CustomError {
@@ -14,12 +14,19 @@ impl From<io::Error> for CustomError {
     }
 }
 
+impl From<&str> for CustomError {
+    fn from(error: &str) -> Self {
+        CustomError::StrError(error.to_string())
+    }
+}
+
 impl fmt::Display for CustomError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             CustomError::IOError(e) => write!(f, "IOError: {}", e),
+            CustomError::StrError(s) => write!(f, "StrError: {}", s),
         }
     }
 }
 
-// Implement `Display` and other traits as needed for better error handling.
+// You can continue implementing other traits and methods for better error handling as required.
