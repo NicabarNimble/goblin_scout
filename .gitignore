@@ -2,6 +2,6 @@
 .env
 
 # Folders
-/target
-/repositories
-/markdown
+**/target
+**/repositories
+**/markdown
