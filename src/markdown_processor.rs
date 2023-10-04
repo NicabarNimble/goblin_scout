@@ -4,10 +4,9 @@ use crate::utilities::{is_ignored, write_to_file};
 use git2::Repository;
 use std::fs;
 use std::io::Error as IOError;
-use std::path::{Path};
+use std::path::Path;
 use walkdir::WalkDir;
 
-// This function is the one you previously had. I'll keep it in case you still need it.
 pub fn gather_repo_content(repo: &Repository) -> Result<String, IOError> {
     let mut markdown_content = String::new();
     let repo_path = repo.path().parent().unwrap_or_else(|| Path::new(""));
@@ -37,7 +36,6 @@ pub fn gather_repo_content(repo: &Repository) -> Result<String, IOError> {
     Ok(markdown_content)
 }
 
-// New function to generate individual markdown files
 pub fn generate_markdown_files(repo: &Repository, base_output_dir: &Path) -> Result<(), IOError> {
     let repo_name = repo
         .workdir()
@@ -79,7 +77,10 @@ pub fn generate_markdown_files(repo: &Repository, base_output_dir: &Path) -> Res
             .path()
             .strip_prefix(&repo_path)
             .unwrap_or(entry.path());
-        let output_file_path = output_dir.join(relative_path).with_extension("md");
+
+        // Adjusted here to keep the original extension and add `.md` after
+        let output_file_name = format!("{}.md", relative_path.to_string_lossy());
+        let output_file_path = output_dir.join(output_file_name);
 
         write_to_file(&output_file_path, file_markdown)?;
     }
