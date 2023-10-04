@@ -4,7 +4,7 @@ use crate::utilities::{is_ignored, write_to_file};
 use git2::Repository;
 use std::fs;
 use std::io::Error as IOError;
-use std::path::{Path, PathBuf};
+use std::path::{Path};
 use walkdir::WalkDir;
 
 // This function is the one you previously had. I'll keep it in case you still need it.
