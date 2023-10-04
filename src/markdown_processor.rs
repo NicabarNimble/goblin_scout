@@ -1,6 +1,7 @@
 // markdown_processor.rs
 
 use crate::utilities::{is_ignored, write_to_file};
+use chrono::Utc;
 use git2::Repository;
 use std::fs;
 use std::io::Error as IOError;
@@ -46,6 +47,9 @@ pub fn generate_markdown_files(repo: &Repository, base_output_dir: &Path) -> Res
 
     let repo_path = repo.path().parent().unwrap_or_else(|| Path::new(""));
 
+    // Fetch current date and time
+    let current_datetime = Utc::now().format("%Y-%m-%d %H:%M:%S").to_string();
+
     for entry in WalkDir::new(&repo_path) {
         let entry = match entry {
             Ok(entry) => entry,
@@ -60,14 +64,32 @@ pub fn generate_markdown_files(repo: &Repository, base_output_dir: &Path) -> Res
         }
 
         let content = fs::read_to_string(entry.path()).unwrap_or_default();
+
         let header = format!(
-            "# File: {}\n\n- Path: {}\n- Size: {} bytes\n\n",
+            "---\n\
+            title: {} - {}\n\
+            date: {}\n\
+            tags:\n\
+            - <1st tag>\n\
+            github: <link to github>\n\
+            contributors: <list of repo contributors from most to least>\n\
+            release: <latest release and time/date>\n\
+            ---\n\n\
+            File\n\
+            Path: {}\n\
+            Size: {} bytes\n",
+            repo_name,
             entry
                 .path()
                 .file_name()
                 .unwrap_or_default()
                 .to_string_lossy(),
-            entry.path().display(),
+            current_datetime,
+            entry
+                .path()
+                .strip_prefix(&repo_path)
+                .unwrap_or(entry.path())
+                .display(),
             content.len()
         );
 
