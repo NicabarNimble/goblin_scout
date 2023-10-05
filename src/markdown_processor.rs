@@ -43,6 +43,27 @@ pub fn gather_repo_content(repo: &Repository) -> Result<String, IOError> {
     Ok(markdown_content)
 }
 
+fn get_latest_release_info(repo: &Repository) -> Result<(String, String), IOError> {
+    let tags = repo.tag_names(None).map_err(git_to_io_error)?;
+    let latest_tag = tags
+        .iter()
+        .last()
+        .ok_or_else(|| IOError::new(IOErrorKind::Other, "No tags found"))?
+        .ok_or_else(|| IOError::new(IOErrorKind::Other, "Invalid tag found"))?;
+
+    let obj = repo.revparse_single(latest_tag).map_err(git_to_io_error)?;
+    let commit = obj.peel_to_commit().map_err(git_to_io_error)?;
+
+    let timestamp = commit.time();
+    let datetime = chrono::DateTime::<chrono::Utc>::from_timestamp(timestamp.seconds(), 0);
+    let formatted_datetime = datetime
+        .expect("Expected a DateTime value")
+        .format("%Y-%m-%d %H:%M:%S")
+        .to_string();
+
+    Ok((latest_tag.to_string(), formatted_datetime))
+}
+
 pub fn generate_markdown_files(repo: &Repository, base_output_dir: &Path) -> Result<(), IOError> {
     let repo_name = repo
         .workdir()
@@ -62,6 +83,9 @@ pub fn generate_markdown_files(repo: &Repository, base_output_dir: &Path) -> Res
     let current_datetime = Utc::now().format("%Y-%m-%d %H:%M:%S").to_string();
 
     let contributors = gather_contributors(repo)?;
+
+    // Fetch the latest release info.
+    let (latest_release, release_datetime) = get_latest_release_info(repo)?;
 
     for entry in WalkDir::new(&repo_path) {
         let entry = match entry {
@@ -104,7 +128,7 @@ pub fn generate_markdown_files(repo: &Repository, base_output_dir: &Path) -> Res
             - <1st tag>\n\
             github: [{}]({})\n\
             contributors: {}\n\
-            release: <latest release and time/date>\n\
+            release: {} - {}\n\
             ---\n\n\
             File\n\
             Path: {}\n\
@@ -115,6 +139,8 @@ pub fn generate_markdown_files(repo: &Repository, base_output_dir: &Path) -> Res
             file_name,
             file_github_url,
             contributor_list,
+            latest_release,
+            release_datetime,
             relative_path.display(),
             content.len()
         );
