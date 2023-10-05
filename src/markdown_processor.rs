@@ -2,7 +2,7 @@
 
 use crate::utilities::{is_ignored, write_to_file};
 use chrono::Utc;
-use git2::{Commit, Object, ObjectType, Remote, Repository, Revwalk};
+use git2::{Object, ObjectType, Repository, Revwalk};
 use std::collections::HashMap;
 use std::fs;
 use std::io::{Error as IOError, ErrorKind as IOErrorKind};
