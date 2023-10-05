@@ -5,7 +5,7 @@ mod git_source;
 mod markdown_processor;
 mod models;
 mod utilities;
-use crate::markdown_processor::*;
+
 use std::io;
 
 fn main() {
