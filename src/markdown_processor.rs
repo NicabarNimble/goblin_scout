@@ -118,6 +118,17 @@ pub fn generate_markdown_files(repo: &Repository, base_output_dir: &Path) -> Res
             .file_name()
             .unwrap_or_default()
             .to_string_lossy();
+
+        // Determine the language based on file extension
+        let file_extension = entry
+            .path()
+            .extension()
+            .unwrap_or_default()
+            .to_str()
+            .unwrap_or_default();
+        let language = determine_language_from_extension(file_extension)
+            .unwrap_or_else(|_| String::from(file_extension));
+
         let contributor_list = format_contributors(&contributors);
 
         let header = format!(
@@ -125,7 +136,7 @@ pub fn generate_markdown_files(repo: &Repository, base_output_dir: &Path) -> Res
             title: {} - {}\n\
             date: {}\n\
             tags:\n\
-            - <1st tag>\n\
+            - {}\n\
             github: [{}]({})\n\
             contributors: {}\n\
             release: {} - {}\n\
@@ -136,6 +147,7 @@ pub fn generate_markdown_files(repo: &Repository, base_output_dir: &Path) -> Res
             repo_name,
             file_name,
             current_datetime,
+            language,
             file_name,
             file_github_url,
             contributor_list,
@@ -188,4 +200,24 @@ fn format_contributors(contributors: &HashMap<String, usize>) -> String {
         .map(|(author, count)| format!("{} ({})", author, count))
         .collect::<Vec<String>>()
         .join(" | ") // separate by '|'
+}
+
+fn determine_language_from_extension(file_extension: &str) -> Result<String, String> {
+    // Load the extension to language mapping from the JSON file
+    let file_contents = fs::read_to_string("extension_mapping.json")
+        .map_err(|_| "Failed to read the extension_mapping.json".to_string())?;
+
+    // Parse the JSON content
+    let mapping: HashMap<String, Vec<String>> = serde_json::from_str(&file_contents)
+        .map_err(|_| "Failed to parse the JSON content".to_string())?;
+
+    // Search for the file extension in the mapping
+    for (language, extensions) in mapping.iter() {
+        if extensions.contains(&file_extension.to_string()) {
+            return Ok(language.clone());
+        }
+    }
+
+    // If the file extension isn't found in the list, return the file extension itself
+    Ok(file_extension.to_string())
 }
