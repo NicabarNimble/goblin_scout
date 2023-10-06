@@ -1,8 +1,15 @@
+use crate::errors::CustomError;
+use crate::source::git::RepositoryDetails;
+use std::io;
+use std::path::PathBuf;
+
 // Prompt user for repository details
-pub fn prompt_for_repo_details() -> Result<RepositoryDetails, IOError> {
+pub fn prompt_for_repo_details() -> Result<RepositoryDetails, CustomError> {
     let mut input = String::new();
     println!("Please enter the repo URL:");
-    io::stdin().read_line(&mut input)?;
+    io::stdin()
+        .read_line(&mut input)
+        .map_err(|e| CustomError::IOError(e))?;
     let repo_url = input.trim().to_string();
 
     let repo_name = repo_url

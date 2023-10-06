@@ -1,9 +1,14 @@
 // trans_md/code_md.rs
 
+use crate::git::process_repo_files;
+use crate::source::git::{git_contributors, git_latest_release};
+use chrono::Utc;
+use git2::Repository;
 use std::collections::HashMap;
 use std::fs;
 use std::io::{Error as IOError, ErrorKind as IOErrorKind};
 use std::path::Path;
+use walkdir::DirEntry;
 
 // Format top 5 contributors with more than 1 commit
 pub fn md_contrib_five(contributors: &HashMap<String, usize>) -> String {
@@ -22,10 +27,10 @@ pub fn md_contrib_five(contributors: &HashMap<String, usize>) -> String {
 // Determine programming language from file extension
 pub fn md_lang_maps(file_extension: &str) -> Result<String, String> {
     let mapping: HashMap<String, Vec<String>> = fs::read_to_string("extension_mapping.json")
+        .map_err(|_| "Failed to read the extension_mapping.json".to_string())
         .and_then(|content| {
             serde_json::from_str(&content).map_err(|_| "Failed to parse JSON".to_string())
-        })
-        .map_err(|_| "Failed to read the extension_mapping.json".to_string())?;
+        })?;
 
     let formatted_extension = if file_extension.starts_with('.') {
         file_extension.to_string()
@@ -45,7 +50,7 @@ pub fn md_lang_maps(file_extension: &str) -> Result<String, String> {
 // Gather the content of the repository in markdown format.
 pub fn gather_repo_content(repo: &Repository) -> Result<String, IOError> {
     let mut markdown_content = String::new();
-    process_repo_files(repo, &mut |entry| {
+    process_repo_files(repo, &mut |entry: &DirEntry| {
         markdown_content.push_str(&format!(
             "## File: {}\n\n```\n{}\n```\n",
             entry.path().display(),
@@ -75,8 +80,8 @@ pub fn generate_markdown_files(repo: &Repository, base_output_dir: &Path) -> Res
         .map_err(|e| IOError::new(IOErrorKind::Other, e))?;
     let default_branch = head.shorthand().unwrap_or("main");
     let current_datetime = Utc::now().format("%Y-%m-%d %H:%M:%S").to_string();
-    let contributors = gather_contributors(repo)?;
-    let (latest_release, release_datetime) = get_latest_release_info(repo)?;
+    let contributors = git_contributors(repo)?;
+    let (latest_release, release_datetime) = git_latest_release(repo)?;
 
     process_repo_files(repo, |entry| {
         let content = fs::read_to_string(entry.path())?;
@@ -101,9 +106,8 @@ pub fn generate_markdown_files(repo: &Repository, base_output_dir: &Path) -> Res
             .unwrap_or_default()
             .to_str()
             .unwrap_or_default();
-        let language = determine_language_from_extension(file_extension)
-            .unwrap_or_else(|_| file_extension.to_string());
-        let contributor_list = format_contributors_top_five(&contributors);
+        let language = md_lang_maps(file_extension).unwrap_or_else(|_| file_extension.to_string());
+        let contributor_list = md_contrib_five(&contributors);
 
         let header = format!(
             "---\ntitle: {} - {}\ndate: {}\ntags:\n- {}\ngithub: [{}]({})\ncontributors: {}\nrelease: {} - {}\n---\n\nFile\nPath: {}\nSize: {} bytes\n",
