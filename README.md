@@ -1,3 +1,3 @@
-# goblin_scout
+# Turn Back Now...
 
-![MD Wrapper](src/assets/scout.png)
+![Goblin Scout](src/assets/scout.png)
