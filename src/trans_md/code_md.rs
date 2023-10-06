@@ -3,6 +3,7 @@
 use crate::git::process_repo_files;
 use crate::source::git::{git_contributors, git_latest_release};
 use crate::tools::errors::CustomError;
+use crate::tools::fops;
 use chrono::Utc;
 use git2::Repository;
 use std::collections::HashMap;
@@ -79,7 +80,9 @@ pub fn generate_markdown_files(
     let output_dir = base_output_dir.join(repo_name);
     let repo_path = repo.path().parent().unwrap_or(Path::new(""));
 
-    // Use ? here directly, as GitError can be converted to CustomError automatically.
+    // Create the output directory if it does not exist
+    fops::fops_mkdir(&output_dir)?;
+
     let remote = repo.find_remote("origin")?;
     let repo_url = remote.url().unwrap_or("").replace(".git", "");
 
@@ -87,13 +90,14 @@ pub fn generate_markdown_files(
     let default_branch = head.shorthand().unwrap_or("main");
     let current_datetime = Utc::now().format("%Y-%m-%d %H:%M:%S").to_string();
 
-    // Assuming git_contributors and git_latest_release return Result types with CustomError or types
-    // that can be converted to CustomError.
     let contributors = git_contributors(repo)?;
     let (latest_release, release_datetime) = git_latest_release(repo)?;
 
     process_repo_files(repo, |entry| {
-        // If fs::read_to_string returns io::Error, it will be converted to CustomError automatically.
+        if fops::fops_skip(entry) {
+            return Ok(());
+        }
+
         let content = fs::read_to_string(entry.path())?;
         let relative_path = entry
             .path()
@@ -131,8 +135,7 @@ pub fn generate_markdown_files(
         let output_file_name = format!("{}.md", relative_path.to_string_lossy());
         let output_file_path = output_dir.join(output_file_name);
 
-        // Again, fs::write can produce an io::Error, which can be automatically converted to CustomError.
-        fs::write(&output_file_path, file_markdown)?;
+        fops::fops_write(&output_file_path, file_markdown)?;
         Ok(())
     })?;
     Ok(())
