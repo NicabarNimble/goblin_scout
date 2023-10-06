@@ -1,11 +1,13 @@
-// errors.rs
+// tools/errors.rs
+
+use git2::Error as GitError;
 use std::fmt;
-use std::io;
+use std::io::{self, Error as IOError, ErrorKind as IOErrorKind};
 
 #[derive(Debug)]
 pub enum CustomError {
     IOError(io::Error),
-    StrError(String), // New variant for handling &str errors
+    StrError(String),
 }
 
 impl From<io::Error> for CustomError {
@@ -29,4 +31,7 @@ impl fmt::Display for CustomError {
     }
 }
 
-// You can continue implementing other traits and methods for better error handling as required.
+// Convert git2::Error (or your custom GitError) to standard IOError
+pub fn git_to_io_error(err: GitError) -> IOError {
+    IOError::new(IOErrorKind::Other, err.to_string())
+}
