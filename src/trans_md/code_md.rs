@@ -80,7 +80,6 @@ pub fn generate_markdown_files(
     let output_dir = base_output_dir.join(repo_name);
     let repo_path = repo.path().parent().unwrap_or(Path::new(""));
 
-    // Create the output directory if it does not exist
     fops::fops_mkdir(&output_dir)?;
 
     let remote = repo.find_remote("origin")?;
@@ -121,8 +120,6 @@ pub fn generate_markdown_files(
             .to_str()
             .unwrap_or_default();
 
-        // If md_lang_maps returns an error, you might want to adjust its signature to return
-        // a CustomError or handle it here accordingly.
         let language = md_lang_maps(file_extension).unwrap_or_else(|_| file_extension.to_string());
 
         let contributor_list = md_contrib_five(&contributors);
