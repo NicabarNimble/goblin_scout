@@ -1,37 +1,23 @@
 // tools/errors.rs
-
 use git2::Error as GitError;
-use std::fmt;
-use std::io::{self, Error as IOError, ErrorKind as IOErrorKind};
+use serde_json::Error as JsonError;
+use std::io;
+use thiserror::Error;
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum CustomError {
-    IOError(io::Error),
+    #[error(transparent)]
+    IOError(#[from] io::Error),
+
+    #[error("Encountered error: {0}")]
     StrError(String),
-}
 
-impl From<io::Error> for CustomError {
-    fn from(error: io::Error) -> Self {
-        CustomError::IOError(error)
-    }
-}
+    #[error(transparent)]
+    GitError(#[from] GitError),
 
-impl From<&str> for CustomError {
-    fn from(error: &str) -> Self {
-        CustomError::StrError(error.to_string())
-    }
-}
+    #[error("JSON Parsing Error: {0}")]
+    JsonParsingError(#[from] JsonError),
 
-impl fmt::Display for CustomError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            CustomError::IOError(e) => write!(f, "IOError: {}", e),
-            CustomError::StrError(s) => write!(f, "StrError: {}", s),
-        }
-    }
-}
-
-// Convert git2::Error (or your custom GitError) to standard IOError
-pub fn git_to_io_error(err: GitError) -> IOError {
-    IOError::new(IOErrorKind::Other, err.to_string())
+    #[error("Failed to parse {0}. Reason: {1}")]
+    DetailedJsonParsingError(String, String),
 }

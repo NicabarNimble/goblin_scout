@@ -16,7 +16,7 @@ mod trans_md {
 
 use source::git;
 use std::io;
-use tools::errors;
+use tools::errors::CustomError;
 use tools::fops;
 use tools::ui::prompt_for_repo_details;
 use trans_md::code_md as markdown_processor;
@@ -27,7 +27,7 @@ fn main() {
     }
 }
 
-fn run() -> Result<(), errors::CustomError> {
+fn run() -> Result<(), CustomError> {
     let repo_details = prompt_for_repo_details()?;
     let repo = git::git_repo_check(&repo_details)?;
 
@@ -55,7 +55,9 @@ fn run() -> Result<(), errors::CustomError> {
         }
         _ => {
             println!("Invalid option selected.");
-            return Err(errors::CustomError::from("Invalid option provided."));
+            return Err(CustomError::StrError(
+                "Invalid option provided.".to_string(),
+            ));
         }
     }
 
