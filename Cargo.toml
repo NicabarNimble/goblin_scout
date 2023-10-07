@@ -1,3 +1,5 @@
+# cargo.toml
+
 [package]
 name = "goblin_scout"
 version = "0.1.0"

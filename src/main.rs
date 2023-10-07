@@ -1,25 +1,8 @@
 // main.rs
-
-mod source {
-    pub mod git;
-}
-
-mod tools {
-    pub mod errors;
-    pub mod fops;
-    pub mod ui;
-}
-
-mod trans_md {
-    pub mod code_md;
-}
-
-use source::git;
+use goblin_scout::source::git;
+use goblin_scout::tools::{errors::CustomError, fops, ui::prompt_for_repo_details};
+use goblin_scout::trans_md::code_md as markdown_processor;
 use std::io;
-use tools::errors::CustomError;
-use tools::fops;
-use tools::ui::prompt_for_repo_details;
-use trans_md::code_md as markdown_processor;
 
 fn main() {
     if let Err(e) = run() {

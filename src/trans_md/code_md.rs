@@ -9,15 +9,30 @@ use git2::Repository;
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
+use std::path::PathBuf;
 use walkdir::DirEntry;
 
-const EXTENSION_MAPPING_PATH: &str = "assets/lang_maps.json";
+// Gets the path to the assets/lang_maps.json file.
+pub fn get_asset_path() -> PathBuf {
+    let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    path.push("src");
+    path.push("assets");
+    path.push("lang_maps.json");
+    path
+}
 
 // Determine programming language from file extension
 pub fn md_lang_maps(file_extension: &str) -> Result<String, CustomError> {
-    let content = std::fs::read_to_string(EXTENSION_MAPPING_PATH).map_err(CustomError::IOError)?;
+    let asset_path = get_asset_path();
+
+    // Read the content of the file.
+    let content = fs::read_to_string(&asset_path).map_err(|e| {
+        CustomError::StrError(format!("Failed to read {}: {}", asset_path.display(), e))
+    })?;
+
+    // Deserialize the JSON content into a HashMap.
     let mapping: HashMap<String, Vec<String>> = serde_json::from_str(&content).map_err(|e| {
-        CustomError::DetailedJsonParsingError(EXTENSION_MAPPING_PATH.into(), e.to_string())
+        CustomError::DetailedJsonParsingError("assets/lang_maps.json".into(), e.to_string())
     })?;
 
     let formatted_extension = if file_extension.starts_with('.') {
@@ -136,4 +151,30 @@ pub fn generate_markdown_files(
         Ok(())
     })?;
     Ok(())
+}
+
+// ... the rest of your code for the `code_md` module ...
+
+// Nested tests module at the end
+#[cfg(test)]
+mod tests {
+    // Import the parent module's functions and structs
+    use super::*;
+
+    #[test]
+    fn test_markdown_tag_creation() {
+        // Mock data or setup
+        let file_extension = "rs";
+
+        let asset_path = get_asset_path();
+        println!("Asset path from test: {}", asset_path.display());
+
+        // Invoke your function
+        let language_tag = md_lang_maps(file_extension).unwrap();
+
+        // Assert the expected outcome
+        assert_eq!(language_tag, "Rust");
+    }
+
+    // ... more tests as needed ...
 }
