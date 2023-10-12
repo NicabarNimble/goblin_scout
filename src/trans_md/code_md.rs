@@ -1,5 +1,8 @@
 // trans_md/code_md.rs
 
+// --------------------------
+// IMPORTS
+// --------------------------
 use crate::git::process_repo_files;
 use crate::source::git::{git_contributors, git_latest_release};
 use crate::tools::errors::CustomError;
@@ -12,7 +15,11 @@ use std::path::Path;
 use std::path::PathBuf;
 use walkdir::DirEntry;
 
-// Gets the path to the assets/lang_maps.json file.
+// ---------------------------
+// UTILITY GENERAL FUNCTIONS
+// ---------------------------
+
+// Return path to the assets/lang_maps.json file.
 pub fn get_asset_path() -> PathBuf {
     let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     path.push("src");
@@ -21,7 +28,11 @@ pub fn get_asset_path() -> PathBuf {
     path
 }
 
-// Determine programming language from file extension
+// ---------------------------
+// UTILITY FORMATING FUNCTIONS
+// ---------------------------
+
+// Determine programming language from file extension using asset mappings.
 pub fn md_lang_maps(file_extension: &str) -> Result<String, CustomError> {
     let asset_path = get_asset_path();
 
@@ -67,8 +78,12 @@ pub fn md_contrib_five(contributors: &HashMap<String, usize>) -> String {
         .join(" | ")
 }
 
-// Gather the content of the repository in markdown format.
-pub fn gather_repo_content(repo: &Repository) -> Result<String, CustomError> {
+// ----------------------------
+// MARKDOWN CREATION FUNCTIONS
+// ----------------------------
+
+// Generate a single markdown file from repository content.
+pub fn code_md_single_markdown(repo: &Repository) -> Result<String, CustomError> {
     let mut markdown_content = String::new();
     process_repo_files(repo, &mut |entry: &DirEntry| {
         markdown_content.push_str(&format!(
@@ -81,8 +96,8 @@ pub fn gather_repo_content(repo: &Repository) -> Result<String, CustomError> {
     Ok(markdown_content)
 }
 
-// Generate markdown files for the content of the repository.
-pub fn generate_markdown_files(
+// Generate individual markdown files from repository content maintain file structure.
+pub fn code_md_multi_markdown(
     repo: &Repository,
     base_output_dir: &Path,
 ) -> Result<(), CustomError> {
@@ -153,14 +168,15 @@ pub fn generate_markdown_files(
     Ok(())
 }
 
-// ... the rest of your code for the `code_md` module ...
+// --------------------------
+// TESTS
+// --------------------------
 
-// Nested tests module at the end
 #[cfg(test)]
 mod tests {
-    // Import the parent module's functions and structs
     use super::*;
 
+    // Test if the markdown tag is created correctly for given file extension.
     #[test]
     fn test_markdown_tag_creation() {
         // Mock data or setup

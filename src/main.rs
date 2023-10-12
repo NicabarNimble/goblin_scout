@@ -24,7 +24,7 @@ fn run() -> Result<(), CustomError> {
 
     match option {
         "1" => {
-            let markdown_content = markdown_processor::gather_repo_content(&repo)?;
+            let markdown_content = markdown_processor::code_md_single_markdown(&repo)?;
             fops::fops_write(&repo_details.markdown_output, markdown_content)?;
             println!("Single markdown file updated.");
         }
@@ -33,7 +33,7 @@ fn run() -> Result<(), CustomError> {
                 println!("Invalid output path provided in repo details. Using current directory as default.");
                 std::path::Path::new(".")
             });
-            markdown_processor::generate_markdown_files(&repo, &output_directory)?;
+            markdown_processor::code_md_multi_markdown(&repo, &output_directory)?;
             println!("Individual markdown files generated.");
         }
         _ => {
