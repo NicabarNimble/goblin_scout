@@ -18,6 +18,7 @@ fn run() -> Result<(), CustomError> {
     println!("Please select an option for markdown output:");
     println!("1: Generate a single markdown file.");
     println!("2: Generate individual markdown files.");
+    println!("3: Generate dataset markdown."); // New option
     let mut option = String::new();
     io::stdin().read_line(&mut option)?;
     let option = option.trim();
@@ -35,6 +36,14 @@ fn run() -> Result<(), CustomError> {
             });
             markdown_processor::code_md_multi_markdown(&repo, &output_directory)?;
             println!("Individual markdown files generated.");
+        }
+        "3" => {
+            let output_directory = repo_details.markdown_output.parent().unwrap_or_else(|| {
+                println!("Invalid output path provided in repo details. Using current directory as default.");
+                std::path::Path::new(".")
+            });
+            markdown_processor::code_md_dataset_markdown(&repo, &output_directory)?;
+            println!("Dataset markdown generated.");
         }
         _ => {
             println!("Invalid option selected.");
