@@ -170,7 +170,7 @@ pub fn code_md_multi_markdown(
         .and_then(|s| s.to_str())
         .unwrap_or("unknown_repo");
 
-    let output_dir = base_output_dir.join(repo_name);
+    let output_dir = base_output_dir.join("multi").join(repo_name);
     let repo_path = repo.path().parent().unwrap_or(Path::new(""));
 
     fops::fops_mkdir(&output_dir)?;
@@ -247,7 +247,8 @@ pub fn code_md_dataset_markdown(
         .and_then(|s| s.to_str())
         .unwrap_or("unknown_repo");
 
-    let output_dir = base_output_dir.join(repo_name);
+    let output_dir = base_output_dir.join("dataset").join(repo_name);
+
     let repo_path = repo.path().parent().unwrap_or(Path::new(""));
 
     fops::fops_mkdir(&output_dir)?;
