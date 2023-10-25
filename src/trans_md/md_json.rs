@@ -1,6 +1,4 @@
 // trans_md/md_json.rs
-
-use serde::{Deserialize, Serialize};
 use serde_yaml;
 use std::fs::{self, read_to_string, OpenOptions};
 use std::io::{self, Write};
@@ -11,7 +9,7 @@ struct FileMetadata {
     title: String,
     date: String,
     tags: Vec<String>,
-    UUID: String,
+    uuid: String,
     github: String,
     contributors: String,
     latest_release: String,
@@ -22,7 +20,7 @@ struct FileMetadata {
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Section {
-    UUID: String,
+    uuid: String,
     content: String,
 }
 
@@ -56,10 +54,7 @@ fn extract_from_md(file_content: &str) -> FileContent {
         }
         let uuid = format!("[UUID:{}", section_parts[0]);
         let content = section_parts[1].to_string();
-        parsed_sections.push(Section {
-            UUID: uuid,
-            content,
-        });
+        parsed_sections.push(Section { uuid, content });
     }
 
     FileContent {

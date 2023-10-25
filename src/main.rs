@@ -2,6 +2,7 @@
 use goblin_scout::source::git;
 use goblin_scout::tools::{errors::CustomError, fops, ui::prompt_for_repo_details};
 use goblin_scout::trans_md::code_md as markdown_processor;
+use goblin_scout::trans_md::md_json::convert_md_to_json;
 use std::io;
 
 fn main() {
@@ -44,6 +45,23 @@ fn run() -> Result<(), CustomError> {
             });
             markdown_processor::code_md_dataset_markdown(&repo, &output_directory)?;
             println!("Dataset markdown generated.");
+
+            // Prompt for JSON conversion
+            println!("Would you like to create a JSON file? (y/n)");
+            let mut json_option = String::new();
+            io::stdin().read_line(&mut json_option)?;
+
+            if json_option.trim().to_lowercase() == "y" {
+                let json_filename = format!("{}/{}.json", repo.name, repo.name);
+                let json_path = output_directory
+                    .join("dataset")
+                    .join(repo.name)
+                    .join(json_filename);
+
+                convert_md_to_json(&output_directory, &json_path)?;
+
+                println!("JSON file created at: {:?}", json_path);
+            }
         }
         _ => {
             println!("Invalid option selected.");

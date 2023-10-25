@@ -12,6 +12,7 @@ pub mod tools {
 
 pub mod trans_md {
     pub mod code_md;
+    pub mod md_json;
 }
 
 pub use source::git;
