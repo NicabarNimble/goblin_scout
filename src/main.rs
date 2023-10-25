@@ -46,17 +46,16 @@ fn run() -> Result<(), CustomError> {
             markdown_processor::code_md_dataset_markdown(&repo, &output_directory)?;
             println!("Dataset markdown generated.");
 
-            // Prompt for JSON conversion
             println!("Would you like to create a JSON file? (y/n)");
             let mut json_option = String::new();
             io::stdin().read_line(&mut json_option)?;
 
             if json_option.trim().to_lowercase() == "y" {
-                let json_filename = format!("{}/{}.json", repo.name, repo.name);
-                let json_path = output_directory
-                    .join("dataset")
-                    .join(repo.name)
-                    .join(json_filename);
+                let json_folder_path = output_directory.join("dataset");
+                let json_name = json_folder_path.file_name().unwrap().to_str().unwrap();
+
+                let json_filename = format!("{}.json", json_name.replace(".", "_"));
+                let json_path = json_folder_path.join(json_filename);
 
                 convert_md_to_json(&output_directory, &json_path)?;
 

@@ -1,4 +1,5 @@
 // trans_md/md_json.rs
+use serde::{Deserialize, Serialize};
 use serde_yaml;
 use std::fs::{self, read_to_string, OpenOptions};
 use std::io::{self, Write};
