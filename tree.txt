@@ -1,0 +1,28 @@
+.
+├── Cargo.lock
+├── Cargo.toml
+├── README.md
+├── repositories
+├── markdown
+├── src
+│   ├── assets
+│   │   ├── lang_maps.json
+│   │   ├── old_lang_maps.json
+│   │   └── scout.png
+│   ├── lib.rs
+│   ├── main.rs
+│   ├── source
+│   │   ├── git.rs
+│   │   └── mod.rs
+│   ├── tools
+│   │   ├── errors.rs
+│   │   ├── fops.rs
+│   │   ├── mod.rs
+│   │   └── ui.rs
+│   └── trans_md
+│       ├── code_md.rs
+│       ├── md_json.rs
+│       └── mod.rs
+└── tree.txt
+
+6 directories, 18 files
