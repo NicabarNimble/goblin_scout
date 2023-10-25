@@ -11,11 +11,12 @@ struct FileMetadata {
     date: String,
     tags: Vec<String>,
     uuid: String,
-    github: String,
+    github_name: String,
+    github_url: String,
     contributors: String,
     latest_release: String,
     release_date: String,
-    path: String,
+    file_path: String,
     size: i32,
 }
 
@@ -35,9 +36,9 @@ fn extract_from_md(file_content: &str) -> FileContent {
     let parts: Vec<&str> = file_content.split("---\n").collect();
 
     // Parse metadata
-    let metadata = parts[1];
+    let metadata_str = parts[1];
     let metadata: FileMetadata =
-        serde_yaml::from_str(metadata).expect("Failed to parse YAML metadata");
+        serde_yaml::from_str(metadata_str).expect("Failed to parse YAML metadata");
 
     // Extract sections using UUID as delimiter
     let content_parts = parts[2..].join("---\n");

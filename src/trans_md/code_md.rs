@@ -104,12 +104,13 @@ fn create_markdown_header(
         date: {}\n\
         tags:\n\
         - {}\n\
-        - [UUID:{}]\n\
-        github: [{}]({})\n\
+        uuid: {}\n\
+        github_name: {}\n\
+        github_url: {}\n\
         contributors: {}\n\
         latest_release: {}\n\
         release_date: {}\n\
-        path: {:?}\n\
+        file_path: \"{}\"\n\
         size: {}\n\
         ---\n",
         repo_name,
