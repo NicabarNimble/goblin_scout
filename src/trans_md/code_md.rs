@@ -187,7 +187,9 @@ pub fn code_md_multi_markdown(
     let (latest_release, release_datetime) = git_latest_release(repo)?;
 
     process_repo_files(repo, |entry| {
-        if fops::fops_skip(entry) {
+        let should_skip = fops::fops_skip(entry.path()).unwrap_or(true);
+
+        if should_skip {
             return Ok(());
         }
 
@@ -265,7 +267,9 @@ pub fn code_md_dataset_markdown(
     let (latest_release, release_datetime) = git_latest_release(repo)?;
 
     process_repo_files(repo, |entry| {
-        if fops::fops_skip(entry) {
+        let should_skip = fops::fops_skip(entry.path()).unwrap_or(true);
+
+        if should_skip {
             return Ok(());
         }
 

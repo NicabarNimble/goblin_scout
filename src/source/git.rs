@@ -96,9 +96,13 @@ where
 
     for entry in WalkDir::new(&repo_path) {
         let entry = entry.map_err(|e| CustomError::StrError(e.to_string()))?;
-        if fops_skip(&entry) || !entry.path().is_file() {
+
+        let should_skip = fops_skip(&entry.path()).unwrap_or(true);
+
+        if should_skip || !entry.path().is_file() {
             continue;
         }
+
         callback(&entry)?;
     }
     Ok(())

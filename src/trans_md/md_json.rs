@@ -76,7 +76,6 @@ fn process_file<P: AsRef<Path>>(path: P) -> io::Result<Option<FileContent>> {
 
 fn traverse_directory<P: AsRef<Path>>(path: P) -> io::Result<Vec<FileContent>> {
     let mut result = Vec::new();
-
     if path.as_ref().is_dir() {
         for entry in fs::read_dir(&path)? {
             let entry = entry?;
