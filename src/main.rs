@@ -1,4 +1,5 @@
 // main.rs
+
 use goblin_scout::source::git;
 use goblin_scout::tools::{errors::CustomError, fops, ui::prompt_for_repo_details};
 use goblin_scout::trans_md::code_md as markdown_processor;
@@ -26,9 +27,12 @@ fn run() -> Result<(), CustomError> {
     println!("1: Generate a single markdown file.");
     println!("2: Generate individual markdown files.");
     println!("3: Generate dataset markdown.");
+
     let mut option = String::new();
     io::stdin().read_line(&mut option)?;
     let option = option.trim();
+
+    let output_directory = determine_output_directory(&repo_details.markdown_output)?;
 
     match option {
         "1" => {
@@ -36,38 +40,27 @@ fn run() -> Result<(), CustomError> {
             fops::fops_write(&repo_details.markdown_output, markdown_content)?;
             println!("Single markdown file updated.");
         }
-        "2" | "3" => {
-            let output_directory = determine_output_directory(&repo_details.markdown_output)?;
+        "2" => {
+            markdown_processor::code_md_multi_markdown(&repo, &output_directory)?;
+            println!("Individual markdown files generated.");
+        }
+        "3" => {
+            let repo_name = &repo_details.name;
 
-            if option == "2" {
-                markdown_processor::code_md_multi_markdown(&repo, &output_directory)?;
-                println!("Individual markdown files generated.");
-            } else if option == "3" {
-                markdown_processor::code_md_dataset_markdown(&repo, &output_directory)?;
-                println!("Dataset markdown generated.");
+            let markdown_subdir = output_directory.join("dataset").join(&repo_name);
+            markdown_processor::code_md_dataset_markdown(&repo, &markdown_subdir)?;
+            println!("Dataset markdown generated.");
 
-                println!("Would you like to create a JSON file? (y/n)");
-                let mut json_option = String::new();
-                io::stdin().read_line(&mut json_option)?;
+            println!("Would you like to create a JSON file? (y/n)");
+            let mut json_option = String::new();
+            io::stdin().read_line(&mut json_option)?;
 
-                if json_option.trim().to_lowercase() == "y" {
-                    // Get the repo name from repo_details.markdown_output
-                    let repo_name = repo_details
-                        .markdown_output
-                        .file_stem()
-                        .unwrap()
-                        .to_str()
-                        .unwrap();
+            if json_option.trim().eq_ignore_ascii_case("y") {
+                let json_path = output_directory.join(format!("{}.json", repo_name));
 
-                    // Create the JSON filename based on the repo name
-                    let json_filename = format!("{}.json", repo_name);
+                convert_md_to_json(&markdown_subdir, &json_path)?;
 
-                    let json_path = output_directory.join(json_filename);
-
-                    convert_md_to_json(&output_directory, &json_path)?;
-
-                    println!("JSON file created at: {:?}", json_path);
-                }
+                println!("JSON file created at: {:?}", json_path);
             }
         }
         _ => {

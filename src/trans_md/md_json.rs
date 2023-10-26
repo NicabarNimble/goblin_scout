@@ -1,7 +1,8 @@
 // trans_md/md_json.rs
 use serde::{Deserialize, Serialize};
+use serde_json;
 use serde_yaml;
-use std::fs::{self, read_to_string, OpenOptions};
+use std::fs::{self, read_to_string, File};
 use std::io::{self, Write};
 use std::path::Path;
 
@@ -92,17 +93,8 @@ fn traverse_directory<P: AsRef<Path>>(path: P) -> io::Result<Vec<FileContent>> {
     Ok(result)
 }
 
-pub fn convert_md_to_json<P1: AsRef<Path>, P2: AsRef<Path>>(
-    src_dir: P1,
-    dest_file: P2,
-) -> io::Result<()> {
-    let files_data = traverse_directory(src_dir)?;
-    let json_output = serde_json::to_string_pretty(&files_data)?;
-    OpenOptions::new()
-        .write(true)
-        .create(true)
-        .truncate(true)
-        .open(dest_file)?
-        .write_all(json_output.as_bytes())?;
+pub fn convert_md_to_json<P: AsRef<Path>>(src_dir: P, dest_file: P) -> io::Result<()> {
+    let json_output = serde_json::to_string_pretty(&traverse_directory(&src_dir)?)?;
+    File::create(dest_file)?.write_all(json_output.as_bytes())?;
     Ok(())
 }
