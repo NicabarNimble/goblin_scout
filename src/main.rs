@@ -45,10 +45,7 @@ fn run() -> Result<(), CustomError> {
             println!("Individual markdown files generated.");
         }
         "3" => {
-            let repo_name = &repo_details.name;
-
-            let markdown_subdir = output_directory.join("dataset").join(&repo_name);
-            markdown_processor::code_md_dataset_markdown(&repo, &markdown_subdir)?;
+            markdown_processor::code_md_dataset_markdown(&repo, &output_directory)?;
             println!("Dataset markdown generated.");
 
             println!("Would you like to create a JSON file? (y/n)");
@@ -56,13 +53,15 @@ fn run() -> Result<(), CustomError> {
             io::stdin().read_line(&mut json_option)?;
 
             if json_option.trim().eq_ignore_ascii_case("y") {
-                let json_path = output_directory.join(format!("{}.json", repo_name));
+                let md_directory = output_directory.join("dataset").join(&repo_details.name);
+                println!("Converting MD in directory: {:?}", md_directory);
 
-                convert_md_to_json(&markdown_subdir, &json_path)?;
-
+                let json_path = output_directory.join(format!("{}.json", &repo_details.name));
+                convert_md_to_json(&md_directory, &json_path)?;
                 println!("JSON file created at: {:?}", json_path);
             }
         }
+
         _ => {
             println!("Invalid option selected.");
             return Err(CustomError::StrError(
