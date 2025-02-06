@@ -52,21 +52,17 @@ fn git_repo_clone(repo_url: &str, local_repo_path: &PathBuf) -> Result<Repositor
 
 pub fn git_latest_release(repo: &Repository) -> Result<(String, String), CustomError> {
     let tags = repo.tag_names(None)?;
-    let latest_tag = tags
-        .iter()
-        .last()
-        .ok_or(CustomError::StrError("No tags found".to_string()))?
-        .ok_or(CustomError::StrError("Invalid tag found".to_string()))?;
-
-    let obj = repo.revparse_single(latest_tag)?;
-    let commit = obj.peel_to_commit()?;
-
-    let timestamp = commit.time();
-    let datetime = chrono::DateTime::<chrono::Utc>::from_timestamp(timestamp.seconds(), 0)
-        .expect("Expected a DateTime value");
-    let formatted_datetime = datetime.format("%Y-%m-%d %H:%M:%S").to_string();
-
-    Ok((latest_tag.to_string(), formatted_datetime))
+    if let Some(Some(latest_tag)) = tags.iter().last() {
+        let obj = repo.revparse_single(latest_tag)?;
+        let commit = obj.peel_to_commit()?;
+        let timestamp = commit.time();
+        let datetime = chrono::DateTime::<chrono::Utc>::from_timestamp(timestamp.seconds(), 0)
+            .expect("Expected a DateTime value");
+        let formatted_datetime = datetime.format("%Y-%m-%d %H:%M:%S").to_string();
+        Ok((latest_tag.to_string(), formatted_datetime))
+    } else {
+        Ok(("No Release".to_string(), "N/A".to_string()))
+    }
 }
 
 pub fn git_contributors(repo: &Repository) -> Result<HashMap<String, usize>, CustomError> {
